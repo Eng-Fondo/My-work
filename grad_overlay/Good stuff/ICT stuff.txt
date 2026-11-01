@@ -1,0 +1,46 @@
+https://www.youtube.com/watch?v=ZhMw53Ud2tY
+
+1. Automatic updates (very risk for production server)
+	#apt install unattended-upgrades
+	#dpkg-reconfigure --priority=low unattended-upgrades
+2. Create a normal user, avoid use root@user
+	#adduser fondo
+	#usermod -aG sudo fondo (add user to sudo group)
+3. Create an authentication key-pair for login (private & public key)
+	#mkdir ~/.ssh && chmod 700 ~/.ssh
+	then logout from the server
+	C:\Users\fondo>ssh-keygen -b 4096 (on the local machine we are using to remote to the server)
+	C:\Users\fondo>cd .ssh
+	C:\Users\fondo>ls (it will list the private key and the public key)
+	C:\Users\fondo\.ssh>scp $env:USERPROFILE/.ssh/id_rsa.pub fondo@192.168.10.12:~/.ssh/authorized_keys
+	C:\Users\fondo>ssh fondo@192.168.10.12
+	(no password need for password)
+noc@localhost:-$
+4. Lockdown logins
+	#sudo nano /etc/ssh/sshd_config
+	(i) change the port number frm Port 22 to 717
+	(ii) uncomment AddressFamily inet
+	(iii) change PermitRootLogin "yes" to "no"
+	(iv) PasswordAuthentication (frm yes to no)
+	(save changes and exit)
+	#sudo systemctl restart sshd
+logout
+	#ssh fondo@192.168.10.12 -p 717
+5. Firewall the server (csf/nftables)
+	#sudo ss -tupln
+	(show the tcp ssh listening port  0.0.0.0:717)
+	#sudo apt install ufw
+	#sudo ufw status
+	#sudo ufw allow 717
+	#sudo ufw enable
+Install apache2
+	#sudo systemctl start apache2
+	#sudo ss -tuplb
+(you will see tcp port 80, but it wont be allowed)
+	#sudo ufw allow 80/tcp
+6. Hide your server from ping/hackers
+	#sudo nano /etc/ufw/before.rules
+#ok icmp codes for INPUT
+-A ufw-before-input -p icmp --icmp-type echo-request -j DROP
+-A ufw-before-input -p icmp --icmp-type destination-unreachable -j ACCEPT
+	#sudo ufw reload
